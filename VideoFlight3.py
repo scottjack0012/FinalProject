@@ -40,13 +40,16 @@ def check_posy(cy, scf):
 def check_posx(cx, scf):
     ##    print(cx)
     if (cx < centreright) and (cx > centreleft):
-        print("Detected in the centre")        
+        print("Detected in the centre")
+        mc.stop()
     elif cx > centreright:
         print("Turn Right")
         mc.turn_right(20, 50)
+        return "Right"
     elif cx < centreleft:
         print("Turn Left")
         mc.turn_left(20, 50)
+        return "Left"
 
 def check_distance(area):
     if (area < 39000) and (area > 23000):
@@ -56,13 +59,22 @@ def check_distance(area):
     elif (area < 23000):
         print("Too far, getting closer")
         mc.start_forward(0.2)
-##        print("sleeping for")
-##        time.sleep(5)
+
     elif (area > 39000):
         print("Too Close!")
         mc.start_back(0.1)
-##        print("sleeping back")
-##        time.sleep(5)
+
+def search(direction):
+    if direction == "Left":
+        mc.start_turn_left(25)
+        print("Searching left")
+    elif direction == "Right":
+        mc.start_turn_right(25)
+        print("Searching right")
+    else:
+        mc.start_turn_left(0.2)
+        print("Searching for face")
+
 
 def get_frame(startTime):
     currentTime = time.time()
@@ -79,7 +91,8 @@ if __name__ == '__main__':
         with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
             
             time.sleep(2)
-            vid = cv2.VideoCapture('/home/jackscott/MyFiles/testimages/mytestvid4.mp4')
+            direction = "Right"
+            vid = cv2.VideoCapture('/home/jackscott/MyFiles/testimages/mytestvid5.mp4')
             #print(seconds)
             total = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
             count = 0
@@ -99,6 +112,7 @@ if __name__ == '__main__':
                         #cv2.imshow('Frame', resized)
                         
                         bboxes = classifier.detectMultiScale(resized)
+                        bboxes = np.array(bboxes)
                         for box in bboxes:
                          print(box)
 
@@ -108,6 +122,11 @@ if __name__ == '__main__':
                         rectangle(resized, (centreright,0), (dimx,dimy), (0, 0, 255), 1)
                         #Centre box
                         rectangle(resized, (centreleft,centretop), (centreright,centrebottom), (0, 255, 0), 1)
+
+                        if not bboxes.any():
+                            print("No face detected")
+                            print(direction)
+                            search(direction)
 
                         for box in bboxes:
                             # extract
@@ -121,7 +140,8 @@ if __name__ == '__main__':
                             rectangle(resized, (cx-5, cy-5), (cx+5, cy+5), (255, 255, 0), 1)
                             print(area)
                             check_posy(cy, scf)
-                            check_posx(cx, scf)
+                            direction = check_posx(cx, scf)
+                            print(direction)
                             check_distance(area)
 
                         if cv2.waitKey(25) & 0xFF == ord('q'):
