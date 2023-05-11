@@ -87,7 +87,7 @@ def search(direction):
         mc.start_turn_right(25)
         print("Searching right")
     else:
-        mc.start_turn_left(0.2)
+        mc.start_turn_right(25)
         print("Searching for face")
 
 
@@ -102,73 +102,73 @@ def get_frame(startTime):
 
 if __name__ == '__main__':
     cflib.crtp.init_drivers()
-    #with SyncCrazyflie(URI) as scf:
-        #with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
-
-    detector = MTCNN()
-    time.sleep(3)
-    direction = "Right"
-    vid = cv2.VideoCapture('/home/jackscott/MyFiles/testimages/mytestvid3.mp4')
-    #print(seconds)
-    total = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
-    count = 0
-    #print(total)
-    classifier = CascadeClassifier('/home/jackscott/MyFiles/openCV/haarcascade_frontalface_default.xml')
-    startTime = time.time()
-    if (vid.isOpened()== False):
-        print("Error setting up video")
-    else:
-        while (vid.isOpened()):
-            frameNo = get_frame(startTime)
-            vid.set(cv2.CAP_PROP_POS_FRAMES,frameNo)
-            ret, frame = vid.read()
-            if ret == True:
-                
-                resized = cv2.resize(frame, (dimx, dimy), interpolation = cv2.INTER_AREA)
-                #cv2.imshow('Frame', resized)
-                
-                bboxes = detector.detect_faces(resized)
-                bboxes = np.array(bboxes)
-                for box in bboxes:
-                 print(box)
-
-                #Left box
-                rectangle(resized, (0,0), (centreleft,dimy), (0, 0, 255), 1)
-                #Right box
-                rectangle(resized, (centreright,0), (dimx,dimy), (0, 0, 255), 1)
-                #Centre box
-                rectangle(resized, (centreleft,centretop), (centreright,centrebottom), (0, 255, 0), 1)
-
-                if not bboxes.any():
-                    print("No face detected")
-                    print(direction)
-                    #search(direction)
-
-                for box in bboxes:
-                    # extract
-                    x, y, width, height = box['box']
-                    area = height * width
-                    x2, y2 = x + width, y + height
-                    cx, cy = round(x + (width/2)), round(y + (height/2))
-                    
-                    # draw a rectangle over the pixels
-                    rectangle(resized, (x, y), (x2, y2), (255, 0, 0), 1)
-                    rectangle(resized, (cx-5, cy-5), (cx+5, cy+5), (255, 255, 0), 1)
-                              
-                    for key, value in box['keypoints'].items():
-                             cv2.circle(resized, value, 2, (0, 0, 255), 10)
-                    print(area)
-                    #check_posy(cy)
-                    #direction = check_posx(cx)
-                    print(direction)
-                    #check_distance(area)
-
-                if cv2.waitKey(25) & 0xFF == ord('q'):
-                    break
+    with SyncCrazyflie(URI) as scf:
+        with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
+            count = 0
+            detector = MTCNN()
+            time.sleep(3)
+            direction = "Right"
+            vid = cv2.VideoCapture('/home/jackscott/MyFiles/testimages/TurningVideo.mp4')
+            #print(seconds)
+            total = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+            #print(total)
+            startTime = time.time()
+            if (vid.isOpened()== False):
+                print("Error setting up video")
             else:
-                break
-            imshow('face detection', resized)
+                while (vid.isOpened()):
+                    count = count + 1
+                    frameNo = get_frame(startTime)
+                    vid.set(cv2.CAP_PROP_POS_FRAMES,frameNo)
+                    ret, frame = vid.read()
+                    if ret == True:
+                        
+                        resized = cv2.resize(frame, (dimx, dimy), interpolation = cv2.INTER_AREA)
+                        #cv2.imshow('Frame', resized)
+                        
+                        bboxes = detector.detect_faces(resized)
+                        bboxes = np.array(bboxes)
+                        for box in bboxes:
+                         print(box)
+
+                        #Left box
+                        rectangle(resized, (0,0), (centreleft,dimy), (0, 0, 255), 1)
+                        #Right box
+                        rectangle(resized, (centreright,0), (dimx,dimy), (0, 0, 255), 1)
+                        #Centre box
+                        rectangle(resized, (centreleft,centretop), (centreright,centrebottom), (0, 255, 0), 1)
+
+                        if not bboxes.any():
+                            print("No face detected")
+                            print(direction)
+                            search(direction)
+
+                        for box in bboxes:
+                            # extract
+                            x, y, width, height = box['box']
+                            area = height * width
+                            x2, y2 = x + width, y + height
+                            cx, cy = round(x + (width/2)), round(y + (height/2))
+                            for key, value in box['keypoints'].items():
+                                     cv2.circle(resized, value, 2, (0, 0, 255), 10)
+                            
+                            # draw a rectangle over the pixels
+                            rectangle(resized, (x, y), (x2, y2), (255, 0, 0), 1)
+                            rectangle(resized, (cx-5, cy-5), (cx+5, cy+5), (255, 255, 0), 1)
+                                      
+                            print(area)
+                            check_posy(cy)
+                            direction = check_posx(cx)
+                            print(direction)
+                            check_distance(area)
+
+                        if cv2.waitKey(25) & 0xFF == ord('q'):
+                            break
+                    else:
+                        break
+                    imshow('face detection', resized)
             
     vid.release()
 
     cv2.destroyAllWindows()
+    print('frame count: ', count)

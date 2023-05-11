@@ -100,10 +100,10 @@ if __name__ == '__main__':
     cflib.crtp.init_drivers()
     with SyncCrazyflie(URI) as scf:
         with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
-            
+            count = 0
             time.sleep(2)
             direction = "Right"
-            vid = cv2.VideoCapture('/home/jackscott/MyFiles/testimages/mytestvid5.mp4')
+            vid = cv2.VideoCapture('/home/jackscott/MyFiles/testimages/TurningVideo.mp4')
             #print(seconds)
             total = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
             count = 0
@@ -114,6 +114,7 @@ if __name__ == '__main__':
                 print("Error setting up video")
             else:
                 while (vid.isOpened()):
+                    count = count + 1
                     frameNo = get_frame(startTime)
                     vid.set(cv2.CAP_PROP_POS_FRAMES,frameNo)
                     ret, frame = vid.read()
@@ -164,3 +165,4 @@ if __name__ == '__main__':
     vid.release()
 
     cv2.destroyAllWindows()
+    print('frame count: ', count)
